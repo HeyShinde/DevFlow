@@ -42,13 +42,24 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Install vsce
+        run: npm install -g @vscode/vsce
+
       - name: Build extension
         working-directory: devflow
         run: npm run compile
 
       - name: Package extension
         working-directory: devflow
-        run: npm run vscode:prepublish
+        run: vsce package
+
+      - name: List files after packaging
+        working-directory: devflow
+        run: |
+          echo "📁 Contents of devflow directory:"
+          ls -la
+          echo "📦 Looking for .vsix files:"
+          ls -la *.vsix || echo "No .vsix files found"
 
       - name: Upload extension artifact
         uses: actions/upload-artifact@v4
@@ -94,7 +105,7 @@ jobs:
             type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=sha,prefix={{branch}}-
+            type=sha,prefix=sha-
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -126,6 +137,16 @@ jobs:
         with:
           name: extension
           path: dist/
+        continue-on-error: true
+
+      - name: Check if extension artifact exists
+        run: |
+          if [ ! -f dist/devflow-*.vsix ]; then
+            echo "❌ Extension artifact not found. Skipping release creation."
+            exit 1
+          else
+            echo "✅ Extension artifact found: $(ls dist/)"
+          fi
 
       - name: Build changelog
         id: build_changelog
