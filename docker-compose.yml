@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/app:/app/app
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - CHROMA_HOST=vectordb
+      - CHROMA_PORT=8001
+    depends_on:
+      - redis
+      - vectordb
+
+  redis:
+    image: redis/redis-stack:latest
+    ports:
+      - "6379:6379"
+
+  vectordb:
+    image: ghcr.io/chroma-core/chroma:latest
+    ports:
+      - "8001:8001"
+    volumes:
+      - chroma_data:/data
+    environment:
+      ALLOW_RESET: "true"
+      CHROMA_SERVER_HOST: "0.0.0.0"
+      CHROMA_SERVER_PORT: "8001"
+      CHROMA_SERVER_CORS_ALLOW_ORIGINS: '["*"]'
+      CHROMA_SERVER_AUTH_CREDENTIALS: '{"token": "devflow-token"}'
+
+volumes:
+  chroma_data: 

@@ -1,0 +1,60 @@
+site_name: DevFlow
+site_url: https://heyshinde.github.io/devflow/
+repo_url: https://github.com/heyshinde/devflow
+theme:
+  name: material
+  logo: media/devflow.svg
+  favicon: media/devflow.svg
+  features:
+    - content.tabs.link
+  palette:
+    # Palette toggle for light vs dark mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/heyshinde/devflow
+copyright: Copyright &copy; 2025 Shinde Aditya
+docs_dir: source
+nav:
+  - 'Introduction': 'index.md'
+  - 'Getting Started': 'getting_started.md'
+  - 'Docker Guide': 'docker.md'
+  - Extension:
+      - 'Overview': 'extension.md'
+      - 'Sidebar UI': 'sidebar_ui.md'
+      - 'Commands & Shortcuts': 'extension_commands.md'
+      - 'Settings & Configuration': 'extension_settings.md'
+      - 'Features in Depth': 'extension_features.md'
+      - 'Backend Communication': 'extension_backend.md'
+      - 'Testing & Development': 'extension_dev.md'
+  - Backend:
+      - 'Overview': 'backend_overview.md'
+      - 'Setup & Development': 'backend_setup.md'
+      - 'API Reference': 'backend_api.md'
+      - 'Core Components': 'backend_components.md'
+      - 'Customization': 'backend_customization.md'
+      - 'Security': 'backend_security.md'
+  - 'Advanced Usage': 'advanced_usage.md'
+  - 'API Reference': 'api_reference.md'
+  - 'FAQ': 'faq.md'
+  - 'Release Notes': 'release_notes.md'
+  - 'Contributing': 'contributing.md'
+
+
+
+markdown_extensions:
+- pymdownx.superfences:
+    custom_fences:
+      - name: mermaid
+        class: mermaid
+        format: !!python/name:pymdownx.superfences.fence_code_format

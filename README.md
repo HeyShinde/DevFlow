@@ -25,7 +25,7 @@ My project, DevFlow, is an AI-powered Developer Tool that functions as a context
 --->
 ## ✨ Problem Statement
 
-In today's fast-paced software development, developers, especially new hires, spend an exorbitant amount of time (up to **8+ hours per week** according to industry reports like Atlassian's "State of Developer Experience 2024") on non-coding tasks such as:
+In today's fast-paced software development, developers, especially new hires, spend an exorbitant amount of time (up to **8+ hours per week** according to industry reports like Atlassian's "State of Developer Experience 2025") on non-coding tasks such as:
 
 *   **Gathering context:** Understanding how different parts of a complex microservices architecture fit together.
 *   **Navigating legacy systems:** Deciphering poorly documented or undocumented code.

@@ -1,0 +1,172 @@
+{
+  "name": "devflow",
+  "displayName": "DevFlow",
+  "description": "AI-Powered Contextual Assistant for Codebases - Intelligent code search, understanding, and repository insights with AI assistance",
+  "version": "0.0.1",
+  "publisher": "Shinde Aditya",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/heyshinde/DevFlow.git"
+  },
+  "engines": {
+    "vscode": "^1.101.0"
+  },
+  "categories": [
+    "Other",
+    "Programming Languages",
+    "Snippets",
+    "Machine Learning"
+  ],
+  "keywords": [
+    "ai",
+    "code-search",
+    "code-understanding",
+    "repository-analysis",
+    "developer-tools",
+    "productivity"
+  ],
+  "icon": "media/icon.png",
+  "galleryBanner": {
+    "color": "#C80000",
+    "theme": "dark"
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "devflow",
+          "title": "DevFlow",
+          "icon": "$(extensions)"
+        }
+      ]
+    },
+    "views": {
+      "devflow": [
+        {
+          "id": "devflow.sidebarView",
+          "name": "DevFlow Assistant",
+          "type": "webview",
+          "icon": "$(info)"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "devflow.query",
+        "title": "DevFlow: Ask Question About Codebase"
+      },
+      {
+        "command": "devflow.explainSelection",
+        "title": "DevFlow: Explain Selected Code"
+      },
+      {
+        "command": "devflow.indexRepository",
+        "title": "DevFlow: Index Repository"
+      },
+      {
+        "command": "devflow.getStats",
+        "title": "DevFlow: Get Repository Stats"
+      },
+      {
+        "command": "devflow.startBackend",
+        "title": "DevFlow: Start Backend Server"
+      },
+      {
+        "command": "devflow.stopBackend",
+        "title": "DevFlow: Stop Backend Server"
+      },
+      {
+        "command": "devflow.showGettingStarted",
+        "title": "DevFlow: Show Getting Started",
+        "icon": "$(info)"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "devflow.explainSelection",
+          "when": "editorTextFocus && editorHasSelection",
+          "group": "devflow@1"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "devflow.indexRepository",
+          "group": "devflow@1"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "devflow.showGettingStarted",
+          "when": "view == devflow.sidebarView",
+          "group": "navigation@1"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "devflow.query"
+        },
+        {
+          "command": "devflow.explainSelection"
+        },
+        {
+          "command": "devflow.indexRepository"
+        },
+        {
+          "command": "devflow.getStats"
+        },
+        {
+          "command": "devflow.startBackend"
+        },
+        {
+          "command": "devflow.stopBackend"
+        },
+        {
+          "command": "devflow.showGettingStarted"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "DevFlow",
+      "properties": {
+        "devflow.apiUrl": {
+          "type": "string",
+          "default": "http://localhost:8000/api",
+          "description": "DevFlow backend API URL"
+        },
+        "devflow.defaultLimit": {
+          "type": "number",
+          "default": 5,
+          "minimum": 1,
+          "maximum": 50,
+          "description": "Default number of results to return from queries"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test",
+    "postinstall": "node scripts/setup-backend.js"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.101.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "20.x",
+    "@typescript-eslint/eslint-plugin": "^8.31.1",
+    "@typescript-eslint/parser": "^8.31.1",
+    "eslint": "^9.25.1",
+    "typescript": "^5.8.3",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.5.2",
+    "fs-extra": "^11.2.0"
+  }
+}
