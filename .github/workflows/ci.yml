@@ -37,7 +37,7 @@ jobs:
         run: npm ci
 
       - name: Install backend dependencies
-        working-directory: backend
+        working-directory: devflow/backend
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
@@ -60,7 +60,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: backend
-          path: backend/
+          path: devflow/backend/
 
   build-and-push-container:
     name: build-and-push-container
@@ -99,8 +99,8 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./backend
-          file: ./backend/Dockerfile
+          context: ./devflow/backend
+          file: ./devflow/backend/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: |
@@ -188,6 +188,9 @@ jobs:
     name: security-scan
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      security-events: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
