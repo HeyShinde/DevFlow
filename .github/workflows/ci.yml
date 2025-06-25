@@ -34,7 +34,17 @@ jobs:
 
       - name: Install extension dependencies
         working-directory: devflow
-        run: npm ci
+        run: npm install
+
+      - name: Check installed dependencies
+        working-directory: devflow
+        run: |
+          echo "📦 Checking if @types/vscode is installed:"
+          ls -la node_modules/@types/vscode || echo "❌ @types/vscode not found"
+          echo "📦 Checking if @types/node is installed:"
+          ls -la node_modules/@types/node || echo "❌ @types/node not found"
+          echo "📦 Checking if typescript is installed:"
+          ls -la node_modules/typescript || echo "❌ typescript not found"
 
       - name: Install backend dependencies
         working-directory: devflow/backend
