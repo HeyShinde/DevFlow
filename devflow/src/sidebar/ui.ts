@@ -675,14 +675,52 @@ export function getHtmlForWebview(webview: vscode.Webview): string {
                     </div>
 
                     <div class="tabs">
-                        <button class="tab active" id="tab-search" onclick="switchTab('search')">💬 Search</button>
+                        <button class="tab active" id="tab-repo" onclick="switchTab('repo')">📁 Repository</button>
+                        <button class="tab" id="tab-search" onclick="switchTab('search')">💬 Search</button>
                         <button class="tab" id="tab-find-similar" onclick="switchTab('find-similar')">🔎 Find Similar</button>
-                        <button class="tab" id="tab-repo" onclick="switchTab('repo')">📁 Repository</button>
-                        <button class="tab" id="tab-logs" onclick="switchTab('logs')">📋 Logs</button>
                         <button class="tab" id="tab-ai-settings" onclick="switchTab('ai-settings')">⚙️ AI Settings</button>
                     </div>
 
-                    <div id="content-search" class="tab-content active">
+                    <div id="content-repo" class="tab-content active">
+                        <div class="card">
+                            <h3>📁 Repository Management</h3>
+                            <div class="form-group">
+                                <input type="text" id="extensionsInput" 
+                                    placeholder="Extensions: py,js,ts (optional)">
+                                <div class="extensions-hint">
+                                    Specify file extensions to index (comma-separated). Leave empty for all files.
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <label class="debug-toggle">
+                                    <input type="checkbox" id="recursiveCheck" checked> 
+                                    Include subdirectories
+                                </label>
+                            </div>
+                            <div class="btn-group">
+                                <button class="btn btn-primary" onclick="indexRepository()">
+                                    📚 Index Repository
+                                </button>
+                                <button class="btn btn-secondary" onclick="getStats()">
+                                    📊 Get Stats
+                                </button>
+                            </div>
+                            <div class="btn-group">
+                                <button class="btn btn-secondary" onclick="clearIndex()">
+                                    🗑️ Clear Index
+                                </button>
+                                <button class="btn btn-secondary" onclick="checkHealth()">
+                                    ❤️ Health Check
+                                </button>
+                            </div>
+                            <div class="debug-toggle">
+                                <input type="checkbox" id="debugMode"> 
+                                Show debug information
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="content-search" class="tab-content">
                         <div class="card">
                             <h3>💬 Search Codebase</h3>
                             <div class="form-group">
@@ -735,58 +773,6 @@ export function getHtmlForWebview(webview: vscode.Webview): string {
                             </div>
                         </div>
                         <div id="response-find-similar" class="response-area"></div>
-                    </div>
-
-                    <div id="content-repo" class="tab-content">
-                        <div class="card">
-                            <h3>📁 Repository Management</h3>
-                            <div class="form-group">
-                                <input type="text" id="extensionsInput" 
-                                    placeholder="Extensions: py,js,ts (optional)">
-                                <div class="extensions-hint">
-                                    Specify file extensions to index (comma-separated). Leave empty for all files.
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <label class="debug-toggle">
-                                    <input type="checkbox" id="recursiveCheck" checked> 
-                                    Include subdirectories
-                                </label>
-                            </div>
-                            <div class="btn-group">
-                                <button class="btn btn-primary" onclick="indexRepository()">
-                                    📚 Index Repository
-                                </button>
-                                <button class="btn btn-secondary" onclick="getStats()">
-                                    📊 Get Stats
-                                </button>
-                            </div>
-                            <div class="btn-group">
-                                <button class="btn btn-secondary" onclick="clearIndex()">
-                                    🗑️ Clear Index
-                                </button>
-                                <button class="btn btn-secondary" onclick="checkHealth()">
-                                    ❤️ Health Check
-                                </button>
-                            </div>
-                            <div class="debug-toggle">
-                                <input type="checkbox" id="debugMode"> 
-                                Show debug information
-                            </div>
-                        </div>
-                        <div id="response-repo" class="response-area">
-                            <div class="backend-controls">
-                                <button id="startBackendBtn" class="btn btn-primary">Start Backend</button>
-                                <button id="stopBackendBtn" class="btn btn-secondary">Stop Backend</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="content-logs" class="tab-content">
-                        <div class="card">
-                            <h3>Backend Logs</h3>
-                            <div class="backend-logs" id="backendLogs"></div>
-                        </div>
                     </div>
 
                     <div id="content-ai-settings" class="tab-content">
@@ -1072,13 +1058,6 @@ export function getHtmlForWebview(webview: vscode.Webview): string {
                             const backendStatus = document.getElementById('backendStatus');
                             backendStatus.className = 'backend-status ' + message.status;
                             backendStatus.textContent = message.message;
-                            break;
-                        case 'backendLog':
-                            const logEntry = document.createElement('div');
-                            logEntry.className = 'log-entry ' + message.logType;
-                            logEntry.textContent = message.message;
-                            document.getElementById('backendLogs').appendChild(logEntry);
-                            document.getElementById('backendLogs').scrollTop = document.getElementById('backendLogs').scrollHeight;
                             break;
                         case 'showGettingStarted':
                             localStorage.removeItem('devflowGetStartedDismissed');

@@ -99,60 +99,49 @@ async def index_codebase(request: IndexRequest, background_tasks: BackgroundTask
         req, "index", settings.RATE_LIMIT_REQUESTS, settings.RATE_LIMIT_WINDOW
     )
     try:
+        # Only log status, not detailed results
+        logger.warning(f"POST /api/index - 200 OK")
         # Clear the vector store before indexing
         vector_store.clear()
-        logger.info(f"Starting indexing for path: {request.path}")
         # If the path is not absolute, resolve it relative to the project root
         if not os.path.isabs(request.path):
             path = os.path.abspath(os.path.join(workspace_root, request.path))
         else:
             path = request.path
-        logger.info(f"Absolute path: {path}")
         if not os.path.exists(path):
-            logger.error(f"Path not found: {path}")
+            logger.error(f"POST /api/index - 404 Not Found: {path}")
             raise HTTPException(status_code=404, detail=f"Path not found: {path}")
-        logger.info(f"Requested extensions: {request.extensions}")
         total_files = 0
         total_chunks = 0
         total_embeddings = 0
+        supported_exts = set(LANGUAGE_MAP.keys())
         for root, _, files in os.walk(path):
-            logger.info(f"Scanning directory: {root}")
             if not request.recursive and root != path:
-                logger.info(f"Skipping subdirectory (recursive=False): {root}")
                 continue
             for file in files:
-                file_ext = os.path.splitext(file)[1].lower()
-                logger.info(f"Checking file: {file} with extension {file_ext}")
+                ext = os.path.splitext(file)[1][1:].lower()
                 if request.extensions:
                     normalized_exts = [ext.lower().lstrip('.') for ext in request.extensions]
-                    logger.info(f"Normalized requested extensions: {normalized_exts}")
-                    if file_ext.lstrip('.') not in normalized_exts:
-                        logger.info(f"Skipping file {file} - extension {file_ext} not in {normalized_exts}")
+                    if ext not in normalized_exts:
                         continue
+                if ext not in supported_exts:
+                    continue  # Skip unsupported files and do not log errors
                 file_path = os.path.join(root, file)
                 try:
-                    logger.info(f"Processing file: {file_path}")
                     with open(file_path, 'r', encoding='utf-8') as f:
                         code = f.read()
-                    logger.info(f"Read {len(code)} bytes from {file_path}")
-                    ext = os.path.splitext(file)[1][1:].lower()
                     lang = LANGUAGE_MAP.get(ext, ext)
-                    logger.info(f"Detected language: {lang} (from extension: {ext})")
                     parsed_code = code_parser.parse_code(code, lang)
                     if not parsed_code:
-                        logger.warning(f"Could not parse code for file: {file_path}")
                         continue
-                    logger.info("Extracting functions and classes...")
                     functions = code_parser.extract_functions(parsed_code, code)
                     classes = code_parser.extract_classes(parsed_code, code)
-                    logger.info(f"Extracted {len(functions)} functions and {len(classes)} classes from {file_path}")
                     file_record = metadata_store.add_file(file_path)
                     file_id = file_record.id
                     # Delete old chunks for this file before adding new ones
                     delete_chunks_for_file(file_id)
                     for func in functions:
                         try:
-                            logger.info(f"Processing function: {func['name']}")
                             vector_store.add_vectors(
                                 [func['code']],
                                 [{
@@ -164,7 +153,6 @@ async def index_codebase(request: IndexRequest, background_tasks: BackgroundTask
                                 }]
                             )
                             total_embeddings += 1
-                            logger.info(f"Successfully embedded function: {func['name']}")
                             chunk_id = str(uuid.uuid4())
                             embedding_id = chunk_id
                             metadata_store.add_chunk(
@@ -180,7 +168,6 @@ async def index_codebase(request: IndexRequest, background_tasks: BackgroundTask
                             logger.error(f"Embedding error for function in {file_path}: {e}\n{traceback.format_exc()}")
                     for cls in classes:
                         try:
-                            logger.info(f"Processing class: {cls['name']}")
                             vector_store.add_vectors(
                                 [cls['code']],
                                 [{
@@ -192,7 +179,6 @@ async def index_codebase(request: IndexRequest, background_tasks: BackgroundTask
                                 }]
                             )
                             total_embeddings += 1
-                            logger.info(f"Successfully embedded class: {cls['name']}")
                             chunk_id = str(uuid.uuid4())
                             embedding_id = chunk_id
                             metadata_store.add_chunk(
@@ -208,10 +194,12 @@ async def index_codebase(request: IndexRequest, background_tasks: BackgroundTask
                             logger.error(f"Embedding error for class in {file_path}: {e}\n{traceback.format_exc()}")
                     total_files += 1
                     total_chunks += len(functions) + len(classes)
+                except UnicodeDecodeError:
+                    # Suppress decode errors for non-UTF-8 files
+                    continue
                 except Exception as e:
                     logger.error(f"Error processing {file_path}: {e}\n{traceback.format_exc()}")
                     continue
-        logger.info(f"Indexing complete: {total_files} files, {total_chunks} chunks, {total_embeddings} embeddings.")
         return {
             "success": True,
             "message": f"Indexing complete! {total_files} files, {total_chunks} code chunks, {total_embeddings} embeddings.",
@@ -222,7 +210,7 @@ async def index_codebase(request: IndexRequest, background_tasks: BackgroundTask
             }
         }
     except Exception as e:
-        logger.error(f"Fatal error in /api/index: {e}\n{traceback.format_exc()}")
+        logger.error(f"POST /api/index - 500 Internal Server Error: {e}\n{traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Internal Server Error: {e}\n{traceback.format_exc()}")
 
 @router.post("/find_similar")
@@ -276,10 +264,8 @@ async def search_codebase(request: SearchRequest, req: Request):
     try:
         logger.info(f"Received search: {request.query} (limit {request.limit})")
         results, distances = vector_store.search(request.query, k=request.limit)
-        logger.info(f"Found {len(results)} results with scores: {distances}")
         chunks = []
         for result, score in zip(results, distances):
-            logger.info(f"Processing result: {result} with score: {score}")
             chunk = {
                 'text': result['code'],
                 'file_path': result['file_path'],
@@ -292,9 +278,8 @@ async def search_codebase(request: SearchRequest, req: Request):
                 'parent_class': result.get('parent_class'),
                 'comments': result.get('comments', [])
             }
-            logger.info(f"Created chunk: {chunk}")
             chunks.append(chunk)
-        logger.info(f"Returning {len(chunks)} chunks")
+        # logger.warning(f"POST /api/search - returning {len(chunks)} chunks")
         return {
             "success": True,
             "message": f"Search complete. {len(chunks)} relevant code chunks found.",
@@ -303,7 +288,7 @@ async def search_codebase(request: SearchRequest, req: Request):
             }
         }
     except Exception as e:
-        logger.error(f"Error searching codebase: {str(e)}")
+        logger.error(f"POST /api/search - 500 Internal Server Error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/stats")
@@ -374,7 +359,7 @@ async def answer_query(
     logger.info(f"/answer called with key={'***' if key else None}, model={model}, token_limit={token_limit}")
 
     if not key:
-        logger.warning("No OpenAI API key provided to /answer endpoint.")
+        logger.warning("POST /api/answer - No OpenAI API key provided.")
         return {
             "success": False,
             "message": "No OpenAI API key provided. Please update it in the DevFlow UI (AI Settings tab).",
@@ -395,7 +380,7 @@ async def answer_query(
             "data": {"answer": answer}
         }
     except Exception as e:
-        logger.error(f"OpenAI API error in /answer: {e}", exc_info=True)
+        logger.error(f"POST /api/answer - 500 Internal Server Error: {e}", exc_info=True)
         return {
             "success": False,
             "message": f"OpenAI API error: {e}",
