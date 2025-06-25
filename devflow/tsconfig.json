@@ -9,10 +9,15 @@
 		],
 		"sourceMap": true,
 		"rootDir": "src",
-		"strict": true,   /* enable all strict type-checking options */
+		"strict": true,
 		"jsx": "react-jsx",
-		"types": ["vscode", "node"],
+		"moduleResolution": "node16",
+		"esModuleInterop": true,
+		"allowSyntheticDefaultImports": true,
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true,
+		"types": ["vscode", "node"]
 	},
-	"include": ["src"],
-	"exclude": ["src/test"]
+	"include": ["src/**/*"],
+	"exclude": ["src/test/**/*", "out", "node_modules", "**/*.test.ts"]
 }

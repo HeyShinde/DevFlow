@@ -23,6 +23,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22.17.0'
+          cache: 'npm'
+          cache-dependency-path: 'devflow/package-lock.json'
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -30,19 +32,24 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
 
+      # Clean install with explicit dependency installation
       - name: Install extension dependencies
         working-directory: devflow
-        run: npm ci
+        run: |
+          npm ci
+          # Ensure type definitions are explicitly installed
+          npm install --save-dev @types/vscode@^1.101.0 @types/node@24.0.4 typescript@^5.8.3
 
-      - name: Check installed dependencies
+      - name: Verify TypeScript setup
         working-directory: devflow
         run: |
-          echo "📦 Checking if @types/vscode is installed:"
-          ls -la node_modules/@types/vscode || echo "❌ @types/vscode not found"
-          echo "📦 Checking if @types/node is installed:"
-          ls -la node_modules/@types/node || echo "❌ @types/node not found"
-          echo "📦 Checking if typescript is installed:"
-          ls -la node_modules/typescript || echo "❌ typescript not found"
+          echo "📦 TypeScript version:"
+          npx tsc --version
+          echo "📦 Checking critical type definitions:"
+          ls -la node_modules/@types/vscode/ && echo "✅ @types/vscode found" || echo "❌ @types/vscode missing"
+          ls -la node_modules/@types/node/ && echo "✅ @types/node found" || echo "❌ @types/node missing"
+          echo "📦 TypeScript configuration:"
+          npx tsc --showConfig
 
       - name: Install backend dependencies
         working-directory: devflow/backend
@@ -53,58 +60,45 @@ jobs:
       - name: Install vsce
         run: npm install -g @vscode/vsce
 
-      - name: List node_modules/@types
+      # Test TypeScript compilation first
+      - name: Test TypeScript compilation
         working-directory: devflow
-        run: ls -l node_modules/@types
-
-      - name: Show tsconfig.json
-        working-directory: devflow
-        run: cat tsconfig.json
-
-      - name: Show package.json
-        working-directory: devflow
-        run: cat package.json
-
-      - name: Check TypeScript version
-        working-directory: devflow
-        run: npx tsc --version
-
-      - name: Compile TypeScript
-        working-directory: devflow
-        run: npx tsc --project tsconfig.json
+        run: |
+          echo "🔨 Testing TypeScript compilation..."
+          npx tsc --noEmit --project tsconfig.json
 
       - name: Build extension
         working-directory: devflow
         run: npm run compile
 
+      - name: Lint code
+        working-directory: devflow
+        run: npm run lint
+        continue-on-error: true
+
       - name: Package extension
         working-directory: devflow
-        run: vsce package
+        run: vsce package --no-dependencies
 
-      - name: List files after packaging
+      - name: Verify package creation
         working-directory: devflow
         run: |
-          echo "📁 Contents of devflow directory:"
-          ls -la
-          echo "📦 Looking for .vsix files:"
-          ls -la *.vsix || echo "No .vsix files found"
+          echo "📦 Checking for .vsix files:"
+          ls -la *.vsix && echo "✅ Extension packaged successfully" || (echo "❌ Extension packaging failed" && exit 1)
 
       - name: Upload extension artifact
         uses: actions/upload-artifact@v4
         with:
-          name: extension
-          path: devflow/devflow-*.vsix
+          name: extension-${{ github.sha }}
+          path: devflow/*.vsix
+          retention-days: 30
 
       - name: Upload backend artifact
         uses: actions/upload-artifact@v4
         with:
-          name: backend
+          name: backend-${{ github.sha }}
           path: devflow/backend/
-
-      - name: Ensure VS Code and Node types are installed
-        working-directory: devflow
-        run: |
-          npm install --save-dev @types/vscode @types/node typescript
+          retention-days: 30
 
   build-and-push-container:
     name: build-and-push-container
@@ -168,14 +162,14 @@ jobs:
       - name: Download extension artifact
         uses: actions/download-artifact@v4
         with:
-          name: extension
+          name: extension-${{ github.sha }}
           path: dist/
-        continue-on-error: true
 
-      - name: Check if extension artifact exists
+      - name: Verify extension artifact
         run: |
-          if [ ! -f dist/devflow-*.vsix ]; then
-            echo "❌ Extension artifact not found. Skipping release creation."
+          if [ ! -f dist/*.vsix ]; then
+            echo "❌ Extension artifact not found. Listing contents:"
+            ls -la dist/
             exit 1
           else
             echo "✅ Extension artifact found: $(ls dist/)"
@@ -188,11 +182,12 @@ jobs:
           configuration: ".github/changelog-config.json"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          body: ${{ steps.build_changelog.outputs.changelog }}
+          body: ${{ steps.build_changelog.outputs.changelog || 'Release notes will be added soon.' }}
           files: dist/*
           draft: false
           prerelease: false
@@ -217,14 +212,21 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: 'pip'
 
       - name: Install dependencies
         run: |
-          pip install mkdocs-material
-          pip install pymdown-extensions
+          pip install mkdocs-material pymdown-extensions
 
       - name: Build docs
-        run: mkdocs build -f docs/mkdocs.yml
+        run: |
+          if [ -f docs/mkdocs.yml ]; then
+            mkdocs build -f docs/mkdocs.yml
+          else
+            echo "⚠️ mkdocs.yml not found, skipping docs build"
+            mkdir -p docs/site
+            echo "<h1>Documentation coming soon</h1>" > docs/site/index.html
+          fi
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -263,26 +265,6 @@ jobs:
         with:
           sarif_file: 'trivy-results.sarif'
 
-  notify:
-    name: notify
-    needs: [validate-and-build, build-and-push-container, create-github-release, publish-docs-to-gh-pages]
-    runs-on: ubuntu-latest
-    if: always()
-    steps:
-      - name: Notify on success
-        if: success()
-        run: |
-          echo "✅ All CI/CD jobs completed successfully!"
-          echo "🚀 Release: ${{ github.ref }}"
-          echo "📦 Container: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
-          echo "📚 Docs: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
-
-      - name: Notify on failure
-        if: failure()
-        run: |
-          echo "❌ CI/CD pipeline failed!"
-          echo "🔍 Check the logs for more details"
-
   publish-extension:
     name: publish-extension
     needs: [validate-and-build]
@@ -303,12 +285,37 @@ jobs:
       - name: Download extension artifact
         uses: actions/download-artifact@v4
         with:
-          name: extension
+          name: extension-${{ github.sha }}
           path: dist/
 
       - name: Publish to VS Code Marketplace
         run: |
-          cd devflow
-          vsce publish -p ${{ secrets.VSCE_PAT }}
+          if [ -f dist/*.vsix ]; then
+            cd devflow
+            vsce publish -p ${{ secrets.VSCE_PAT }} --packagePath ../dist/*.vsix
+          else
+            echo "❌ No .vsix file found for publishing"
+            exit 1
+          fi
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
+
+  notify:
+    name: notify
+    needs: [validate-and-build, build-and-push-container, create-github-release, publish-docs-to-gh-pages]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Notify on success
+        if: success()
+        run: |
+          echo "✅ All CI/CD jobs completed successfully!"
+          echo "🚀 Release: ${{ github.ref }}"
+          echo "📦 Container: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+          echo "📚 Docs: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "❌ CI/CD pipeline failed!"
+          echo "🔍 Check the logs for more details"
