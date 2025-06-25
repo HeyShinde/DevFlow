@@ -8,7 +8,7 @@ Thank you for your interest in contributing to DevFlow! This guide will help you
 
 ### Prerequisites
 
-- **Node.js 22+** (for extension development)
+- **Node.js 20+** (for extension development)
 - **Python 3.11+** (for backend development)
 - **VS Code** (for extension development)
 - **Git** (for version control)

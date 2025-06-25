@@ -22,9 +22,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: devflow/package-lock.json
+          node-version: '22.17.0'
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -34,7 +32,7 @@ jobs:
 
       - name: Install extension dependencies
         working-directory: devflow
-        run: npm install
+        run: npm ci
 
       - name: Check installed dependencies
         working-directory: devflow
@@ -83,7 +81,7 @@ jobs:
           name: backend
           path: devflow/backend/
 
-      - name: Force install VS Code and Node types
+      - name: Ensure VS Code and Node types are installed
         working-directory: devflow
         run: |
           npm install --save-dev @types/vscode @types/node typescript
@@ -277,9 +275,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: devflow/package-lock.json
+          node-version: '22.17.0'
 
       - name: Install vsce
         run: npm install -g @vscode/vsce

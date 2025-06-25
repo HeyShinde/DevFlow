@@ -124,7 +124,7 @@ DevFlow is designed for easy local setup via Docker Compose.
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/yourusername/devflow.git
+    git clone https://github.com/heyshinde/devflow.git
     cd devflow
     ```
 
