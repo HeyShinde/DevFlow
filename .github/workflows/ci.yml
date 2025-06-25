@@ -53,6 +53,26 @@ jobs:
       - name: Install vsce
         run: npm install -g @vscode/vsce
 
+      - name: List node_modules/@types
+        working-directory: devflow
+        run: ls -l node_modules/@types
+
+      - name: Show tsconfig.json
+        working-directory: devflow
+        run: cat tsconfig.json
+
+      - name: Show package.json
+        working-directory: devflow
+        run: cat package.json
+
+      - name: Check TypeScript version
+        working-directory: devflow
+        run: npx tsc --version
+
+      - name: Compile TypeScript
+        working-directory: devflow
+        run: npx tsc --project tsconfig.json
+
       - name: Build extension
         working-directory: devflow
         run: npm run compile
