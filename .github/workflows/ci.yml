@@ -83,6 +83,11 @@ jobs:
           name: backend
           path: devflow/backend/
 
+      - name: Force install VS Code and Node types
+        working-directory: devflow
+        run: |
+          npm install --save-dev @types/vscode @types/node typescript
+
   build-and-push-container:
     name: build-and-push-container
     needs: [validate-and-build]
