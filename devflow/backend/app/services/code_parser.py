@@ -321,7 +321,7 @@ class CodeParser:
         code_bytes = bytes(code, 'utf8')
         
         def visit_node(node):
-            print(f"Visiting node type: {node.type}")  # Debug logging
+            # print(f"Visiting node type: {node.type}")  # Debug logging
             if node.type == 'function_definition':
                 try:
                     name_node = node.child_by_field_name('name')
@@ -329,7 +329,7 @@ class CodeParser:
                         name = name_node.text.decode('utf-8')
                         code = self._get_node_text(node, code_bytes)
                         docstring = self._get_docstring(node, code_bytes)
-                        print(f"Found function: {name}")  # Debug logging
+                        # print(f"Found function: {name}")  # Debug logging
                         functions.append({
                             'name': name,
                             'code': code,
@@ -357,7 +357,7 @@ class CodeParser:
                         name = name_node.text.decode('utf-8')
                         code = self._get_node_text(node, code_bytes)
                         docstring = self._get_docstring(node, code_bytes)
-                        print(f"Found class: {name}")  # Debug logging
+                        # print(f"Found class: {name}")  # Debug logging
                         classes.append({
                             'name': name,
                             'code': code,

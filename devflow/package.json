@@ -1,9 +1,10 @@
 {
-  "name": "devflow",
-  "displayName": "DevFlow",
+  "name": "devflow-ai",
+  "displayName": "DevFlow AI",
   "description": "AI-Powered Contextual Assistant for Codebases - Intelligent code search, understanding, and repository insights with AI assistance",
   "version": "0.0.1",
   "publisher": "heyshinde",
+  "icon": "media/devflow-ai-logo.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/heyshinde/DevFlow.git"
@@ -26,7 +27,7 @@
     "productivity"
   ],
   "galleryBanner": {
-    "color": "#C80000",
+    "color": "#1a1a2e",
     "theme": "dark"
   },
   "activationEvents": [
@@ -38,8 +39,8 @@
       "activitybar": [
         {
           "id": "devflow",
-          "title": "DevFlow",
-          "icon": "$(extensions)"
+          "title": "DevFlow AI Assistant",
+          "icon": "$(rocket)"
         }
       ]
     },
@@ -49,34 +50,40 @@
           "id": "devflow.sidebarView",
           "name": "DevFlow Assistant",
           "type": "webview",
-          "icon": "$(info)"
+          "icon": "$(rocket)"
         }
       ]
     },
     "commands": [
       {
         "command": "devflow.query",
-        "title": "DevFlow: Ask Question About Codebase"
+        "title": "DevFlow: Ask Question About Codebase",
+        "icon": "$(search)"
       },
       {
         "command": "devflow.explainSelection",
-        "title": "DevFlow: Explain Selected Code"
+        "title": "DevFlow: Explain Selected Code",
+        "icon": "$(lightbulb)"
       },
       {
         "command": "devflow.indexRepository",
-        "title": "DevFlow: Index Repository"
+        "title": "DevFlow: Index Repository",
+        "icon": "$(database)"
       },
       {
         "command": "devflow.getStats",
-        "title": "DevFlow: Get Repository Stats"
+        "title": "DevFlow: Get Repository Stats",
+        "icon": "$(graph)"
       },
       {
         "command": "devflow.startBackend",
-        "title": "DevFlow: Start Backend Server"
+        "title": "DevFlow: Start Backend Server",
+        "icon": "$(play)"
       },
       {
         "command": "devflow.stopBackend",
-        "title": "DevFlow: Stop Backend Server"
+        "title": "DevFlow: Stop Backend Server",
+        "icon": "$(stop)"
       },
       {
         "command": "devflow.showGettingStarted",
@@ -130,7 +137,7 @@
       ]
     },
     "configuration": {
-      "title": "DevFlow",
+      "title": "DevFlow AI Assistant",
       "properties": {
         "devflow.apiUrl": {
           "type": "string",
@@ -143,6 +150,11 @@
           "minimum": 1,
           "maximum": 50,
           "description": "Default number of results to return from queries"
+        },
+        "devflow.pythonPath": {
+          "type": "string",
+          "default": "python",
+          "description": "Path to Python executable for running DevFlow backend"
         }
       }
     }
@@ -152,6 +164,8 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
+    "prepackage": "npm run compile",
+    "package": "vsce package",
     "lint": "eslint src",
     "test": "vscode-test",
     "postinstall": "node scripts/setup-backend.js"
