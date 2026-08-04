@@ -2,7 +2,7 @@
   "name": "devflow-ai",
   "displayName": "DevFlow AI",
   "description": "AI-Powered Contextual Assistant for Codebases - Intelligent code search, understanding, and repository insights with AI assistance",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "publisher": "heyshinde",
   "icon": "media/devflow-ai-logo.png",
   "repository": {
